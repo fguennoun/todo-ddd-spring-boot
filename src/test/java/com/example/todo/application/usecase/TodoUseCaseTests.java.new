@@ -1,0 +1,93 @@
+package com.example.todo.application.usecase;
+
+import com.example.todo.domain.model.Priority;
+import com.example.todo.domain.model.Todo;
+import com.example.todo.domain.model.TodoId;
+import com.example.todo.domain.model.TodoStatus;
+import com.example.todo.domain.repository.TodoRepository;
+import com.example.todo.infrastructure.metrics.TodoMetrics;
+import io.micrometer.core.instrument.Timer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.*;
+
+import java.time.LocalDateTime;
+
+@ExtendWith(MockitoExtension.class)
+class CreateTodoUseCaseTest {
+
+    @Mock
+    private TodoRepository todoRepository;
+
+    @Mock
+    private TodoMetrics todoMetrics;
+
+    @Mock
+    private Timer timer;
+
+    @InjectMocks
+    private CreateTodoUseCase createTodoUseCase;
+
+    @Test
+    void should_create_todo() {
+        // Given
+        String title = "Test Todo";
+        String description = "Test Description";
+        Priority priority = Priority.HIGH;
+        LocalDateTime dueDate = LocalDateTime.now().plusDays(1);
+
+        Todo todo = Todo.create(title, description, priority, dueDate);
+        when(todoRepository.save(any(Todo.class))).thenReturn(todo);
+        when(todoMetrics.getTodoCreationTimer()).thenReturn(timer);
+
+        // When
+        Todo result = createTodoUseCase.execute(title, description, priority, dueDate);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getTitle()).isEqualTo(title);
+        verify(todoRepository).save(any(Todo.class));
+        verify(todoMetrics).getTodoCreationTimer();
+    }
+}
+
+@ExtendWith(MockitoExtension.class)
+class CompleteTodoUseCaseTest {
+
+    @Mock
+    private TodoRepository todoRepository;
+
+    @InjectMocks
+    private CompleteTodoUseCase completeTodoUseCase;
+
+    @Test
+    void should_complete_todo() {
+        // Given
+        Todo todo = Todo.create("Test", "Description", Priority.HIGH, LocalDateTime.now().plusDays(1));
+        TodoId id = todo.getId();
+        when(todoRepository.findById(id)).thenReturn(Optional.of(todo));
+        when(todoRepository.save(todo)).thenReturn(todo);
+
+        // When
+        Todo result = completeTodoUseCase.execute(id);
+
+        // Then
+        assertThat(result.getStatus()).isEqualTo(TodoStatus.COMPLETED);
+        verify(todoRepository).save(todo);
+    }
+
+    @Test
+    void should_throw_exception_when_todo_not_found() {
+        // Given
+        TodoId id = TodoId.generate();
+        when(todoRepository.findById(id)).thenReturn(Optional.empty());
+
+        // When/Then
+        assertThatThrownBy(() -> completeTodoUseCase.execute(id))
+                .isInstanceOf(TodoNotFoundException.class);
+    }
+}
