@@ -6,6 +6,8 @@ import com.example.todo.domain.model.TodoStatus;
 import com.example.todo.domain.repository.TodoRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.example.todo.domain.model.PageResult;
+import com.example.todo.domain.model.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,15 +39,19 @@ public class JpaTodoRepository implements TodoRepository {
     }
 
     @Override
-    public Page<Todo> findByUserId(String userId, Pageable pageable) {
-        Page<TodoJpaEntity> page = jpaRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
-        return page.map(TodoMapper::toDomainEntity);
+    public PageResult<Todo> findByUserId(String userId, PageRequest pageRequest) {
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPageNumber(), pageRequest.getPageSize());
+    Page<TodoJpaEntity> page = jpaRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+    var content = page.map(TodoMapper::toDomainEntity).getContent();
+    return new PageResult<>(content, page.getNumber(), page.getSize(), page.getTotalElements());
     }
 
     @Override
-    public Page<Todo> findByUserIdAndStatus(String userId, TodoStatus status, Pageable pageable) {
-        Page<TodoJpaEntity> page = jpaRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status, pageable);
-        return page.map(TodoMapper::toDomainEntity);
+    public PageResult<Todo> findByUserIdAndStatus(String userId, TodoStatus status, PageRequest pageRequest) {
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPageNumber(), pageRequest.getPageSize());
+    Page<TodoJpaEntity> page = jpaRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status, pageable);
+    var content = page.map(TodoMapper::toDomainEntity).getContent();
+    return new PageResult<>(content, page.getNumber(), page.getSize(), page.getTotalElements());
     }
 
     @Override

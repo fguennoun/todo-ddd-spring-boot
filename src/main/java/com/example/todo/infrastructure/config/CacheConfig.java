@@ -8,6 +8,8 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -27,12 +29,20 @@ import java.util.Map;
 public class CacheConfig {
 
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
+    public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory, ObjectMapper objectMapper) {
         // Configuration par défaut du cache
+        // Default: JSON serializer for most caches
         RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
             .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))
+            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(objectMapper)))
             .entryTtl(Duration.ofMinutes(10)) // TTL par défaut : 10 minutes
+            .disableCachingNullValues();
+
+        // JDK (Java) serializer for caches that store complex types not easily reconstructed by Jackson
+        RedisCacheConfiguration jdkSerializedCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+            .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new JdkSerializationRedisSerializer()))
+            .entryTtl(Duration.ofMinutes(15))
             .disableCachingNullValues();
 
         // Configurations spécifiques par cache
@@ -40,6 +50,7 @@ public class CacheConfig {
             // Cache pour les Todos individuels - TTL court car données fréquemment modifiées
             "todos", defaultCacheConfig.entryTtl(Duration.ofMinutes(5)),
 
+            // Cache pour les listes de Todos - TTL plus long car pagination stable
             // Cache pour les listes de Todos - TTL plus long car pagination stable
             "todoLists", defaultCacheConfig.entryTtl(Duration.ofMinutes(15)),
 

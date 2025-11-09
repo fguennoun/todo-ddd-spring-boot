@@ -56,7 +56,7 @@ public enum TodoStatus {
      */
     public boolean canTransitionTo(TodoStatus newStatus) {
         return switch (this) {
-            case PENDING -> newStatus == IN_PROGRESS || newStatus == CANCELLED;
+            case PENDING -> newStatus == IN_PROGRESS || newStatus == CANCELLED || newStatus == COMPLETED;
             case IN_PROGRESS -> newStatus == COMPLETED || newStatus == CANCELLED;
             case COMPLETED, CANCELLED -> false; // États finaux
         };

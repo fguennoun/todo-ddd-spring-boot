@@ -3,7 +3,7 @@
 # =================================================================
 
 # Stage 1: Build Stage
-FROM openjdk:21-jdk-slim AS builder
+FROM eclipse-temurin:21-jdk AS builder
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ COPY src ./src/
 RUN ./mvnw clean package -DskipTests -B
 
 # Stage 2: Runtime Stage
-FROM openjdk:21-jre-slim AS runtime
+FROM eclipse-temurin:21-jre AS runtime
 
 # Install required packages and create user
 RUN apt-get update && apt-get install -y \

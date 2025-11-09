@@ -1,3 +1,77 @@
+# Todo DDD Spring Boot — Local Development & Debugging Guide
+
+This README documents the local development workflow, debugging steps and notable changes made while preparing the project to run locally with containerized infrastructure (Postgres, Redis, Prometheus, Grafana, Zipkin).
+
+Overview
+--------
+- Java 21, Spring Boot 3.2.x
+- Postgres 15 (container)
+- Redis 7 (container)
+- Flyway for database migrations
+- Actuator + Micrometer (Prometheus)
+- SpringDoc OpenAPI for API docs
+
+What I changed and why
+----------------------
+- docker-compose.yml: The `app` service is commented out so you can run the application locally while the other services run in Docker.
+- `application.yml`: added a `local` profile with sensible defaults (DB, Redis, actuator) to avoid exporting many environment variables.
+- Security: added a `SecurityConfigLocal` (profile `local`) that relaxes authentication for local testing, and annotated the main `SecurityConfig` with `@Profile("!local")` so production behavior is preserved.
+- Flyway migration: fixed an invalid partial index predicate that used non-immutable functions (removed CURRENT_TIMESTAMP usage) so migrations run under Postgres.
+- Caching: changed Redis cache configuration to use a JSON serializer built from the application's `ObjectMapper` instead of caching framework classes like `PageImpl`.
+- Pagination: added/used a JSON-friendly `PageResult<T>` (domain DTO) so responses are safe to serialize to JSON and cache in Redis.
+- Jackson: added `jackson-datatype-jsr310` and registered `JavaTimeModule` via `JacksonConfig` to ensure `Instant` is serialized/deserialized correctly.
+
+Quick start (local development)
+-------------------------------
+1. Start Docker Desktop.
+2. Start infrastructure containers from the project root:
+
+```bash
+docker compose up -d postgres redis prometheus grafana zipkin
+```
+
+3. (Optional but recommended) Flush Redis after switching serializers to remove incompatible cached payloads:
+
+```bash
+docker exec -i todo-redis redis-cli -a redis_password FLUSHALL
+```
+
+4. Start the application locally with the `local` Spring profile (this uses DB/Redis values from `application.yml`):
+
+```bash
+./mvnw -DskipTests -Dspring-boot.run.profiles=local spring-boot:run
+```
+
+If port 8080 is in use, run with a different port:
+
+```bash
+./mvnw -DskipTests -Dspring-boot.run.profiles=local -Dserver.port=8081 spring-boot:run
+```
+
+5. API access
+- Open Swagger UI: http://localhost:8080/swagger-ui.html (or 8081 if you changed port)
+- Use header `X-User-ID` with a user id (e.g., `user123`) when calling the API endpoints. When running with the `local` profile, authentication is relaxed.
+
+Common troubleshooting
+----------------------
+- MeterRegistry bean missing on startup: ensure `spring-boot-starter-actuator` and micrometer registry are on the classpath (this repo adds them to `pom.xml`).
+- Flyway failing: check `src/main/resources/db/migration` for SQL migration syntax. The V1 migration was updated to remove non-immutable functions in index predicates.
+- Redis serialization errors: if you switch serializer implementations, flush Redis to avoid deserialization errors from old payloads.
+- `Instant` serialization errors: ensure `jackson-datatype-jsr310` is available and `JacksonConfig` registers the `JavaTimeModule` and disables timestamps.
+
+Running tests
+-------------
+- Unit tests: run `./mvnw test` (runs unit tests via Surefire).
+- Integration tests: run `./mvnw verify` (this may use Testcontainers or require Docker running).
+
+Notes for maintainers
+---------------------
+- Production security and settings are unchanged; local-only changes are isolated behind the `local` Spring profile.
+- Be careful when changing Redis serializers in the future — coordinate cache invalidation or use versioned cache keys.
+
+If anything in this README is unclear or you want a shorter summary for the repo root, I can produce a trimmed README or add a developer.md with step-by-step screenshots.
+
+— End of automated summary
 # 🎯 Todo DDD Spring Boot - Application de Référence
 
 [![Java](https://img.shields.io/badge/Java-21-red.svg)](https://openjdk.java.net/projects/jdk/21/)

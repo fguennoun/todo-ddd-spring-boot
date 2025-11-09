@@ -183,6 +183,37 @@ logging:
     com.example.todo: DEBUG
 
 ---
+# Local Profile (for running locally with containerized services)
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:postgresql://localhost:5432/todoapp
+    username: todo_user
+    password: todo_password
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: redis_password
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+
+management:
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+
+logging:
+  level:
+    com.example.todo: DEBUG
+    org.springframework.security: DEBUG
+
+---
 # Production Profile
 spring:
   config:

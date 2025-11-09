@@ -53,11 +53,24 @@ public class Todo {
         this.updatedAt = this.createdAt;
         this.status = TodoStatus.PENDING;
 
-        // Validation et assignation via les méthodes métier
-        updateTitle(title);
-        updateDescription(description);
-        updatePriority(priority);
-        updateDueDate(dueDate);
+        // Validation and assignment without touching updatedAt so creation keeps createdAt == updatedAt
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("title cannot be null or empty");
+        }
+        if (title.trim().length() > 255) {
+            throw new IllegalArgumentException("title cannot exceed 255 characters");
+        }
+        this.title = title.trim();
+
+        this.description = description != null ? description.trim() : null;
+
+        this.priority = Objects.requireNonNull(priority, "Priority cannot be null");
+
+        // Validate due date for creation: cannot be in the past
+        if (dueDate != null && dueDate.isBefore(Instant.now())) {
+            throw new IllegalArgumentException("Due date cannot be in the past");
+        }
+        this.dueDate = dueDate;
 
         // Émission de l'événement de création
         addDomainEvent(new TodoCreatedEvent(
@@ -108,15 +121,15 @@ public class Todo {
         validateNotCompleted("Cannot update title of a completed todo");
 
         if (newTitle == null || newTitle.trim().isEmpty()) {
-            throw new IllegalArgumentException("Title cannot be null or empty");
+            throw new IllegalArgumentException("title cannot be null or empty");
         }
 
         if (newTitle.trim().length() > 255) {
-            throw new IllegalArgumentException("Title cannot exceed 255 characters");
+            throw new IllegalArgumentException("title cannot exceed 255 characters");
         }
 
         this.title = newTitle.trim();
-        this.updatedAt = Instant.now();
+        this.updatedAt = nowAfter(this.updatedAt);
     }
 
     /**
@@ -128,7 +141,7 @@ public class Todo {
         validateNotCompleted("Cannot update description of a completed todo");
 
         this.description = newDescription != null ? newDescription.trim() : null;
-        this.updatedAt = Instant.now();
+        this.updatedAt = nowAfter(this.updatedAt);
     }
 
     /**
@@ -140,7 +153,7 @@ public class Todo {
         validateNotCompleted("Cannot update priority of a completed todo");
 
         this.priority = Objects.requireNonNull(newPriority, "Priority cannot be null");
-        this.updatedAt = Instant.now();
+        this.updatedAt = nowAfter(this.updatedAt);
     }
 
     /**
@@ -157,7 +170,7 @@ public class Todo {
         }
 
         this.dueDate = newDueDate;
-        this.updatedAt = Instant.now();
+        this.updatedAt = nowAfter(this.updatedAt);
     }
 
     /**
@@ -205,14 +218,23 @@ public class Todo {
             );
         }
 
-        TodoStatus previousStatus = this.status;
-        this.status = newStatus;
-        this.updatedAt = Instant.now();
+    TodoStatus previousStatus = this.status;
+    this.status = newStatus;
+    this.updatedAt = nowAfter(this.updatedAt);
 
         // Émission de l'événement de changement de statut
         addDomainEvent(new TodoStatusChangedEvent(
             this.id, previousStatus, newStatus, this.userId, Instant.now()
         ));
+    }
+
+    /**
+     * Return an Instant guaranteed to be strictly after the provided previous instant.
+     */
+    private Instant nowAfter(Instant previous) {
+        Instant now = Instant.now();
+        if (previous == null) return now;
+        return now.isAfter(previous) ? now : previous.plusNanos(1);
     }
 
     /**

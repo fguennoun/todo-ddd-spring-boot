@@ -6,8 +6,9 @@ import com.example.todo.domain.repository.TodoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.stream.Collectors;
+import com.example.todo.domain.model.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,11 +39,22 @@ public class ListTodosUseCase {
      * @return page de Todos
      */
     @Cacheable(value = "todoLists", key = "#userId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
-    public Page<TodoResponse> execute(String userId, Pageable pageable) {
+    public com.example.todo.domain.model.PageResult<TodoResponse> execute(String userId, Pageable pageable) {
         logger.debug("Listing todos for user: {} with pagination: {}", userId, pageable);
 
-        return todoRepository.findByUserId(userId, pageable)
-            .map(TodoResponse::from);
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        com.example.todo.domain.model.PageResult<com.example.todo.domain.model.Todo> domainPage = todoRepository.findByUserId(userId, pageRequest);
+
+        var content = domainPage.getContent().stream()
+            .map(TodoResponse::from)
+            .collect(Collectors.toList());
+
+        return new com.example.todo.domain.model.PageResult<>(
+            content,
+            domainPage.getPageNumber(),
+            domainPage.getPageSize(),
+            domainPage.getTotalElements()
+        );
     }
 
     /**
@@ -54,10 +66,21 @@ public class ListTodosUseCase {
      * @return page de Todos filtrés
      */
     @Cacheable(value = "todoListsByStatus", key = "#userId + '_' + #status + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
-    public Page<TodoResponse> executeByStatus(String userId, TodoStatus status, Pageable pageable) {
+    public com.example.todo.domain.model.PageResult<TodoResponse> executeByStatus(String userId, TodoStatus status, Pageable pageable) {
         logger.debug("Listing todos for user: {} with status: {} and pagination: {}", userId, status, pageable);
 
-        return todoRepository.findByUserIdAndStatus(userId, status, pageable)
-            .map(TodoResponse::from);
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        com.example.todo.domain.model.PageResult<com.example.todo.domain.model.Todo> domainPage = todoRepository.findByUserIdAndStatus(userId, status, pageRequest);
+
+        var content = domainPage.getContent().stream()
+            .map(TodoResponse::from)
+            .collect(Collectors.toList());
+
+        return new com.example.todo.domain.model.PageResult<>(
+            content,
+            domainPage.getPageNumber(),
+            domainPage.getPageSize(),
+            domainPage.getTotalElements()
+        );
     }
 }

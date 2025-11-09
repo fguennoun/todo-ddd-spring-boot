@@ -38,7 +38,10 @@ CREATE INDEX idx_todos_priority ON todos(priority_level);
 -- Index composite pour les requêtes complexes
 CREATE INDEX idx_todos_user_status_due ON todos(user_id, status, due_date) WHERE due_date IS NOT NULL;
 CREATE INDEX idx_todos_overdue ON todos(user_id, due_date)
-    WHERE status IN ('PENDING', 'IN_PROGRESS') AND due_date < CURRENT_TIMESTAMP;
+    -- Cannot use CURRENT_TIMESTAMP (not IMMUTABLE) in an index predicate.
+    -- Use a stable predicate that the planner can use for filtered indexes.
+    -- Keep status filter and ensure due_date is not null; leave time comparisons to runtime queries.
+    WHERE status IN ('PENDING', 'IN_PROGRESS') AND due_date IS NOT NULL;
 
 -- Commentaires sur les colonnes
 COMMENT ON TABLE todos IS 'Table principale des Todos - DDD Aggregate Root';

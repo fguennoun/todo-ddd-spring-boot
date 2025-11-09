@@ -107,14 +107,13 @@ public class TodoController {
     @ApiResponse(responseCode = "200", description = "Liste des Todos")
     @ApiResponse(responseCode = "401", description = "Non authentifié")
     @GetMapping
-    public ResponseEntity<Page<TodoResponse>> listTodos(
+    public ResponseEntity<com.example.todo.domain.model.PageResult<TodoResponse>> listTodos(
             @Parameter(description = "Filtre par statut (optionnel)") @RequestParam(required = false) TodoStatus status,
             @Parameter(hidden = true) @PageableDefault(size = 20, sort = "createdAt") Pageable pageable,
             @Parameter(hidden = true) @RequestHeader("X-User-ID") String userId) {
-
         logger.debug("Listing todos for user: {} with status: {}", userId, status);
 
-        Page<TodoResponse> response = status != null
+        com.example.todo.domain.model.PageResult<TodoResponse> response = status != null
             ? listTodosUseCase.executeByStatus(userId, status, pageable)
             : listTodosUseCase.execute(userId, pageable);
 

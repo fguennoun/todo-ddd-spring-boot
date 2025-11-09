@@ -224,6 +224,8 @@ else
       case "$key" in (wrapperUrl) jarUrl="$value"; break ;;
       esac
     done < "$BASE_DIR/.mvn/wrapper/maven-wrapper.properties"
+    # strip CR if file has CRLF line endings to avoid stray '\r' in variables
+    jarUrl="$(printf "%s" "$jarUrl" | tr -d '\r')"
     if [ "$MVNW_VERBOSE" = true ]; then
       echo "Downloading from: $jarUrl"
     fi
@@ -286,7 +288,7 @@ export MAVEN_PROJECTBASEDIR=${MAVEN_BASEDIR:-"$BASE_DIR"}
 if [ "$MVNW_VERBOSE" = true ]; then
   echo $MAVEN_PROJECTBASEDIR
 fi
-MAVEN_OPTS="$(concat_lines "$MAVEN_PROJECTBASEDIR/.mvn/jvm.config") $MAVEN_OPTS"
+MAVEN_OPTS="$(concat_lines "$MAVEN_PROJECTBASEDIR/.mvn/jvm.config" | tr -d '\r') $MAVEN_OPTS"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then

@@ -54,6 +54,8 @@ class TodoRepositoryIntegrationTest {
         System.setProperty("spring.datasource.url", postgres.getJdbcUrl());
         System.setProperty("spring.datasource.username", postgres.getUsername());
         System.setProperty("spring.datasource.password", postgres.getPassword());
+        // Ensure tests use the PostgreSQL driver instead of the H2 driver configured in application.yml
+        System.setProperty("spring.datasource.driver-class-name", "org.postgresql.Driver");
     }
 
     @Autowired
@@ -99,13 +101,13 @@ class TodoRepositoryIntegrationTest {
             todoRepository.save(todo);
         }
 
-        // When
-        Page<Todo> page = todoRepository.findByUserId(USER_ID, PageRequest.of(0, 3));
+    // When
+    com.example.todo.domain.model.PageResult<Todo> page = todoRepository.findByUserId(USER_ID, com.example.todo.domain.model.PageRequest.of(0, 3));
 
-        // Then
-        assertThat(page.getContent()).hasSize(3);
-        assertThat(page.getTotalElements()).isEqualTo(5);
-        assertThat(page.getTotalPages()).isEqualTo(2);
+    // Then
+    assertThat(page.getContent()).hasSize(3);
+    assertThat(page.getTotalElements()).isEqualTo(5);
+    assertThat(page.getTotalPages()).isEqualTo(2);
     }
 
     @Test

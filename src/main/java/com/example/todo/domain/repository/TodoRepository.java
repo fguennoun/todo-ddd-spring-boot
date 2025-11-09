@@ -3,8 +3,8 @@ package com.example.todo.domain.repository;
 import com.example.todo.domain.model.Todo;
 import com.example.todo.domain.model.TodoId;
 import com.example.todo.domain.model.TodoStatus;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.example.todo.domain.model.PageResult;
+import com.example.todo.domain.model.PageRequest;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +49,7 @@ public interface TodoRepository {
      * @param pageable paramètres de pagination
      * @return page de Todos
      */
-    Page<Todo> findByUserId(String userId, Pageable pageable);
+    PageResult<Todo> findByUserId(String userId, PageRequest pageable);
 
     /**
      * Trouve les Todos d'un utilisateur par statut
@@ -59,7 +59,7 @@ public interface TodoRepository {
      * @param pageable paramètres de pagination
      * @return page de Todos
      */
-    Page<Todo> findByUserIdAndStatus(String userId, TodoStatus status, Pageable pageable);
+    PageResult<Todo> findByUserIdAndStatus(String userId, TodoStatus status, PageRequest pageable);
 
     /**
      * Trouve les Todos d'un utilisateur en retard

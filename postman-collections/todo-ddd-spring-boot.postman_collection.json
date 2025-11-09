@@ -1,0 +1,74 @@
+{
+	"info": {
+		"_postman_id": "1a01e612-9181-44f0-8e11-46899fdeb932",
+		"name": "todo-ddd-spring-boot",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "7745543",
+		"_collection_link": "https://ds-warriors.postman.co/workspace/Team-Workspace~0881ecb6-3501-40fe-8175-999c4645dfad/collection/7745543-1a01e612-9181-44f0-8e11-46899fdeb932?action=share&source=collection_link&creator=7745543"
+	},
+	"item": [
+		{
+			"name": "todos",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-User-ID",
+						"value": "test-user",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/api/v1/todos",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"todos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add todo",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-User-ID",
+						"value": "test-user",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"title\": \"Write integration tests\",\r\n  \"description\": \"Add integration tests for ListTodos and CreateTodo use cases\",\r\n  \"priority\": {\r\n    \"level\": 3,\r\n    \"name\": \"Haute\"\r\n  },\r\n  \"dueDate\": \"2025-12-31T23:59:59Z\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/v1/todos",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"todos"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

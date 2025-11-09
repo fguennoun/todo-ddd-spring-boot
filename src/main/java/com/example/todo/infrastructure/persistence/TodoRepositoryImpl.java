@@ -10,7 +10,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.example.todo.domain.model.PageRequest;
+import com.example.todo.domain.model.PageResult;
 import org.springframework.stereotype.Repository;
+import org.springframework.context.annotation.Primary;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +32,7 @@ import java.util.Optional;
  * @author Todo Team
  */
 @Repository
+@Primary
 public class TodoRepositoryImpl implements TodoRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(TodoRepositoryImpl.class);
@@ -71,19 +75,23 @@ public class TodoRepositoryImpl implements TodoRepository {
     }
 
     @Override
-    public Page<Todo> findByUserId(String userId, Pageable pageable) {
-        logger.debug("Finding todos by userId: {} with pageable: {}", userId, pageable);
+    public PageResult<Todo> findByUserId(String userId, PageRequest pageRequest) {
+        logger.debug("Finding todos by userId: {} with pageRequest: {}", userId, pageRequest);
 
-        return jpaRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
-            .map(TodoJpaEntity::toDomain);
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPageNumber(), pageRequest.getPageSize());
+        Page<TodoJpaEntity> page = jpaRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+        var content = page.map(TodoJpaEntity::toDomain).getContent();
+        return new PageResult<>(content, page.getNumber(), page.getSize(), page.getTotalElements());
     }
 
     @Override
-    public Page<Todo> findByUserIdAndStatus(String userId, TodoStatus status, Pageable pageable) {
-        logger.debug("Finding todos by userId: {} and status: {} with pageable: {}", userId, status, pageable);
+    public PageResult<Todo> findByUserIdAndStatus(String userId, TodoStatus status, PageRequest pageRequest) {
+        logger.debug("Finding todos by userId: {} and status: {} with pageRequest: {}", userId, status, pageRequest);
 
-        return jpaRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status, pageable)
-            .map(TodoJpaEntity::toDomain);
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPageNumber(), pageRequest.getPageSize());
+        Page<TodoJpaEntity> page = jpaRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status, pageable);
+        var content = page.map(TodoJpaEntity::toDomain).getContent();
+        return new PageResult<>(content, page.getNumber(), page.getSize(), page.getTotalElements());
     }
 
     @Override
